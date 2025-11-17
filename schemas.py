@@ -12,9 +12,9 @@ Model name is converted to lowercase for the collection name:
 """
 
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, List
 
-# Example schemas (replace with your own):
+# Example schemas (you can keep or remove if not needed):
 
 class User(BaseModel):
     """
@@ -38,11 +38,37 @@ class Product(BaseModel):
     category: str = Field(..., description="Product category")
     in_stock: bool = Field(True, description="Whether product is in stock")
 
-# Add your own schemas here:
-# --------------------------------------------------
+# Storefront-specific schemas
 
-# Note: The Flames database viewer will automatically:
-# 1. Read these schemas from GET /schema endpoint
-# 2. Use them for document validation when creating/editing
-# 3. Handle all database operations (CRUD) directly
-# 4. You don't need to create any database endpoints!
+class ArtPrint(BaseModel):
+    """
+    Art prints for sale
+    Collection name: "artprint"
+    """
+    title: str = Field(..., description="Print title")
+    artist: str = Field(..., description="Artist name")
+    description: Optional[str] = Field(None, description="Short description")
+    price: float = Field(..., ge=0, description="Price in USD")
+    size: str = Field(..., description="Size e.g. 12x18 in")
+    image_url: str = Field(..., description="URL to product image")
+    tags: List[str] = Field(default_factory=list, description="Tags for filtering")
+    in_stock: bool = Field(True, description="Whether available")
+    featured: bool = Field(False, description="Show in hero/featured")
+
+class OrderItem(BaseModel):
+    print_id: str = Field(..., description="ObjectId string of the ArtPrint")
+    quantity: int = Field(..., ge=1, description="Quantity of this item")
+
+class Order(BaseModel):
+    """
+    Orders placed by customers
+    Collection name: "order"
+    """
+    customer_name: str
+    customer_email: str
+    shipping_address: str
+    items: List[OrderItem]
+    total: float = Field(..., ge=0)
+    status: str = Field("pending", description="Order status")
+
+# Note: The Flames database viewer can read these via GET /schema
